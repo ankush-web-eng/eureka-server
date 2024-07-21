@@ -23,9 +23,19 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
         console.log(user);
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(201).json({ message: "User not registered!" });
         }
         return res.json(user);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
+router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const payload = req.body;
+        console.log(payload);
+        return res.json({ message: "User Created" });
     }
     catch (error) {
         res.status(500).json({ message: "Internal Server Error" });
