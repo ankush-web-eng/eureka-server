@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Patient {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  createdAt    DateTime      @default(now())
+  city         String
+  appointments Appointment[]
+  history      History[]
+}
+
+model Doctor {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  name         String
+  hospital     String
+  city         String
+  address      String
+  profile      String
+  phone        String        @unique
+  fee          Int
+  diseases     String[]
+  slots        Slot[]
+  appointments Appointment[]
+  history      History[]
+}
+
+model Appointment {
+  id        String   @id @default(uuid())
+  date      DateTime @default(now())
+  disease   String
+  doctorId  String
+  slotId    String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  slot      Slot     @relation(fields: [slotId], references: [id])
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+}
+
+model History {
+  id        String   @id @default(uuid())
+  date      DateTime @default(now())
+  slotId    String
+  disease   String
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  slot      Slot     @relation(fields: [slotId], references: [id])
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+}
+
+model Slot {
+  id           String        @id @default(uuid())
+  date         DateTime
+  doctorId     String
+  doctor       Doctor        @relation(fields: [doctorId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+  history      History[]
+}
