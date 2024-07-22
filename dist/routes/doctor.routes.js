@@ -34,7 +34,21 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
 router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const payload = req.body;
-        console.log(payload);
+        const isUser = yield db_1.prisma.doctor.findUnique({
+            where: {
+                email: req.params.email
+            }
+        });
+        if (isUser) {
+            return res.status(200).json({ message: "User already exists!" });
+        }
+        const user = yield db_1.prisma.doctor.create({
+            data: Object.assign({}, payload)
+        });
+        console.log("User Created Successfully!!");
+        if (!user) {
+            return res.status(400).json({ message: "User not registered!" });
+        }
         return res.json({ message: "User Created" });
     }
     catch (error) {
