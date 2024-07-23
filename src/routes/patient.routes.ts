@@ -3,7 +3,7 @@ import { prisma } from '../lib/db'
 
 const router = Router();
 
-router.get("/user/:email", async (req : Request, res : Response) => {
+router.get("/user/:email", async (req: Request, res: Response) => {
     try {
         const email = req.params.email
         console.log(email)
@@ -21,7 +21,7 @@ router.get("/user/:email", async (req : Request, res : Response) => {
     }
 })
 
-router.post("/user/create/:email", async (req : Request, res : Response) => {
+router.post("/user/create/:email", async (req: Request, res: Response) => {
     try {
         const email = req.params.email
         const city = req.body.city
@@ -36,6 +36,24 @@ router.post("/user/create/:email", async (req : Request, res : Response) => {
             return res.status(404).json({ message: "User Creation failed" })
         }
         return res.json(user)
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+})
+
+router.get('/doctors', async (req: Request, res: Response) => {
+    const city = req.query.city as string;
+    try {
+        const doctors = await prisma.doctor.findMany({
+            where: {
+                city
+            }
+        })
+        if (!doctors) {
+            return res.status(404).json({ message: "No Doctors found" })
+        }
+        console.log(doctors)
+        res.json(doctors)
     } catch (error) {
         res.status(500).json({ message: "Internal Server Error" })
     }

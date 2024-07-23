@@ -50,4 +50,22 @@ router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 
         res.status(500).json({ message: "Internal Server Error" });
     }
 }));
+router.get('/doctors', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const city = req.query.city;
+    try {
+        const doctors = yield db_1.prisma.doctor.findMany({
+            where: {
+                city
+            }
+        });
+        if (!doctors) {
+            return res.status(404).json({ message: "No Doctors found" });
+        }
+        console.log(doctors);
+        res.json(doctors);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
 exports.default = router;
