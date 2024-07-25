@@ -10,8 +10,21 @@ router.get("/user/:email", async (req: Request, res: Response) => {
         const user = await prisma.patient.findUnique({
             where: {
                 email
+            },
+            include: {
+                appointments: {
+                    include: {
+                        doctor: true
+                    }
+                },
+                history: {
+                    include: {
+                        doctor: true
+                    }
+                }
             }
         })
+        console.log(user)
         if (!user) {
             return res.status(404).json({ message: "User not found" })
         }
@@ -54,6 +67,49 @@ router.get('/doctors', async (req: Request, res: Response) => {
         }
         console.log(doctors)
         res.json(doctors)
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+})
+
+router.post('/appointments/create', async (req: Request, res: Response) => {
+    try {
+        const patientEmail = req.query.patientEmail as string;
+        const { doctorId, date } = req.body
+
+        const isAppointmentBookedAlready = await prisma.appointment.findFirst({
+            where: {
+                patientId: patientEmail,
+                date,
+            }
+
+        })
+
+        if (isAppointmentBookedAlready) {
+            return res.status(400).json({ message: "Appointment already booked" })
+        }
+
+        const appointment = await prisma.appointment.create({
+            data: {
+                date: new Date(date),
+                patient: {
+                    connect: {
+                        email: patientEmail
+                    }
+                },
+                doctor: {
+                    connect: {
+                        id: doctorId
+                    }
+                }
+            }
+        })
+
+        if (!appointment) {
+            return res.status(400).json({ message: "Appointment not created" })
+        }
+
+        return res.json({ message: "Appointment Created" })
     } catch (error) {
         res.status(500).json({ message: "Internal Server Error" })
     }

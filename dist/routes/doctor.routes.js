@@ -19,6 +19,11 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
         const user = yield db_1.prisma.doctor.findUnique({
             where: {
                 email
+            },
+            include: {
+                slots: true,
+                appointments: true,
+                history: true
             }
         });
         console.log(user);

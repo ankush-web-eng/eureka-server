@@ -34,12 +34,12 @@ model Doctor {
 
 model Appointment {
   id        String   @id @default(uuid())
-  date      DateTime @default(now())
-  disease   String
+  date      DateTime
+  disease   String?
   doctorId  String
-  slotId    String
   doctor    Doctor   @relation(fields: [doctorId], references: [id])
-  slot      Slot     @relation(fields: [slotId], references: [id])
+  slotId    String?
+  slot      Slot?    @relation(fields: [slotId], references: [id])
   patientId String
   patient   Patient  @relation(fields: [patientId], references: [id])
 }

@@ -19,8 +19,21 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
         const user = yield db_1.prisma.patient.findUnique({
             where: {
                 email
+            },
+            include: {
+                appointments: {
+                    include: {
+                        doctor: true
+                    }
+                },
+                history: {
+                    include: {
+                        doctor: true
+                    }
+                }
             }
         });
+        console.log(user);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -63,6 +76,44 @@ router.get('/doctors', (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         console.log(doctors);
         res.json(doctors);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
+router.post('/appointments/create', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const patientEmail = req.query.patientEmail;
+        const { doctorId, date } = req.body;
+        // const isAppointmentBookedAlready = await prisma.appointment.findFirst({
+        //     where: {
+        //         patientId: patientEmail,
+        //         date,
+        //     }
+        // })
+        // if (isAppointmentBookedAlready) {
+        //     return res.status(400).json({ message: "Appointment already booked" })
+        // }
+        // const appointment = await prisma.appointment.create({
+        //     data: {
+        //         date: new Date(date),
+        //         patient: {
+        //             connect: {
+        //                 email: patientEmail
+        //             }
+        //         },
+        //         doctor: {
+        //             connect: {
+        //                 id: doctorId
+        //             }
+        //         }
+        //     }
+        // })
+        // if (!appointment) {
+        //     return res.status(400).json({ message: "Appointment not created" })
+        // }
+        console.log(patientEmail, doctorId, date);
+        return res.json({ message: "Appointment Created" });
     }
     catch (error) {
         res.status(500).json({ message: "Internal Server Error" });

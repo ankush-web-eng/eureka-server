@@ -10,6 +10,11 @@ router.get("/user/:email", async (req: Request, res: Response) => {
     const user = await prisma.doctor.findUnique({
       where: {
         email
+      },
+      include:{
+        slots: true,
+        appointments: true,
+        history: true
       }
     })
     console.log(user)
