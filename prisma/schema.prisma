@@ -17,19 +17,39 @@ model Patient {
 }
 
 model Doctor {
+  id             String        @id @default(uuid())
+  email          String        @unique
+  name           String
+  hospital       String
+  city           String
+  address        String
+  profile        String
+  phone          String        @unique
+  fee            Int
+  availableDays  Int[]
+  availableTimes TimeSlot[]
+  diseases       String[]
+  appointments   Appointment[]
+  history        History[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Slot {
   id           String        @id @default(uuid())
-  email        String        @unique
-  name         String
-  hospital     String
-  city         String
-  address      String
-  profile      String
-  phone        String        @unique
-  fee          Int
-  diseases     String[]
-  slots        Slot[]
+  date         DateTime
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   appointments Appointment[]
   history      History[]
+}
+
+model TimeSlot {
+  id        String   @id @default(uuid())
+  startTime DateTime
+  endTime   DateTime
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
 }
 
 model Appointment {
@@ -54,15 +74,4 @@ model History {
   slot      Slot     @relation(fields: [slotId], references: [id])
   patientId String
   patient   Patient  @relation(fields: [patientId], references: [id])
-}
-
-model Slot {
-  id           String        @id @default(uuid())
-  date         DateTime
-  doctorId     String
-  doctor       Doctor        @relation(fields: [doctorId], references: [id])
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  appointments Appointment[]
-  history      History[]
 }

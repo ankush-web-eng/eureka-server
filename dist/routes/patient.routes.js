@@ -85,34 +85,33 @@ router.post('/appointments/create', (req, res) => __awaiter(void 0, void 0, void
     try {
         const patientEmail = req.query.patientEmail;
         const { doctorId, date } = req.body;
-        // const isAppointmentBookedAlready = await prisma.appointment.findFirst({
-        //     where: {
-        //         patientId: patientEmail,
-        //         date,
-        //     }
-        // })
-        // if (isAppointmentBookedAlready) {
-        //     return res.status(400).json({ message: "Appointment already booked" })
-        // }
-        // const appointment = await prisma.appointment.create({
-        //     data: {
-        //         date: new Date(date),
-        //         patient: {
-        //             connect: {
-        //                 email: patientEmail
-        //             }
-        //         },
-        //         doctor: {
-        //             connect: {
-        //                 id: doctorId
-        //             }
-        //         }
-        //     }
-        // })
-        // if (!appointment) {
-        //     return res.status(400).json({ message: "Appointment not created" })
-        // }
-        console.log(patientEmail, doctorId, date);
+        const isAppointmentBookedAlready = yield db_1.prisma.appointment.findFirst({
+            where: {
+                patientId: patientEmail,
+                date,
+            }
+        });
+        if (isAppointmentBookedAlready) {
+            return res.status(400).json({ message: "Appointment already booked" });
+        }
+        const appointment = yield db_1.prisma.appointment.create({
+            data: {
+                date: new Date(date),
+                patient: {
+                    connect: {
+                        email: patientEmail
+                    }
+                },
+                doctor: {
+                    connect: {
+                        id: doctorId
+                    }
+                }
+            }
+        });
+        if (!appointment) {
+            return res.status(400).json({ message: "Appointment not created" });
+        }
         return res.json({ message: "Appointment Created" });
     }
     catch (error) {
