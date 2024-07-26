@@ -27,7 +27,8 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
             },
             include: {
                 appointments: true,
-                history: true
+                history: true,
+                availableTimes: true,
             }
         });
         console.log(user);

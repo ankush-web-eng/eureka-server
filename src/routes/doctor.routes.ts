@@ -15,7 +15,8 @@ router.get("/user/:email", async (req: Request, res: Response) => {
       },
       include: {
         appointments: true,
-        history: true
+        history: true,
+        availableTimes: true,
       }
     })
     console.log(user)

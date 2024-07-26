@@ -69,6 +69,11 @@ router.get('/doctors', (req, res) => __awaiter(void 0, void 0, void 0, function*
         const doctors = yield db_1.prisma.doctor.findMany({
             where: {
                 city
+            },
+            include: {
+                availableTimes: true,
+                appointments: true,
+                history: true,
             }
         });
         if (!doctors) {
