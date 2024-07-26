@@ -80,23 +80,46 @@ router.get('/doctors', async (req: Request, res: Response) => {
 router.post('/appointments/create', async (req: Request, res: Response) => {
     try {
         const patientEmail = req.query.patientEmail as string;
-        const { doctorId, date } = req.body
+        const { doctorId, date } = req.body;
+        const appointmentDate = new Date(date);
 
-        const isAppointmentBookedAlready = await prisma.appointment.findFirst({
-            where: {
-                patientId: patientEmail,
-                date,
-            }
+        const doctor = await prisma.doctor.findUnique({
+            where: { id: doctorId },
+            include: { availableTimes: true }
+        });
 
-        })
-
-        if (isAppointmentBookedAlready) {
-            return res.status(400).json({ message: "Appointment already booked" })
+        if (!doctor) {
+            return res.status(404).json({ message: "Doctor not found" });
         }
+
+        // const isTimeAvailable = doctor.availableTimes.some(timeSlot => {
+        //     const startTime = new Date(timeSlot.startTime);
+        //     const endTime = new Date(timeSlot.endTime);
+        //     return appointmentDate >= startTime && appointmentDate <= endTime;
+        // });
+
+        // if (!isTimeAvailable) {
+        //     return res.status(400).json({ message: "The selected time is not within the doctor's availability." });
+        // }
+
+        // Check for overlapping appointments
+        // const overlappingAppointment = await prisma.appointment.findFirst({
+        //     where: {
+        //         doctorId: doctorId,
+        //         date: {
+        //             gte: appointmentDate,
+        //             lt: new Date(appointmentDate.getTime() + 60 * 60 * 1000) // Assuming 1 hour slots
+        //         }
+        //     }
+        // });
+
+        // if (overlappingAppointment) {
+        //     return res.status(400).json({ message: "The selected time is already booked." });
+        // }
 
         const appointment = await prisma.appointment.create({
             data: {
-                date: new Date(date),
+                date: appointmentDate,
                 patient: {
                     connect: {
                         email: patientEmail
@@ -108,16 +131,18 @@ router.post('/appointments/create', async (req: Request, res: Response) => {
                     }
                 }
             }
-        })
+        });
 
         if (!appointment) {
-            return res.status(400).json({ message: "Appointment not created" })
+            return res.status(400).json({ message: "Appointment not created" });
         }
 
-        return res.json({ message: "Appointment Created" })
+        console.log(patientEmail, doctorId, date);
+        return res.json({ message: "Appointment Created" });
     } catch (error) {
-        res.status(500).json({ message: "Internal Server Error" })
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-})
+});
 
 export default router;
