@@ -8,13 +8,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const db_1 = require("../lib/db");
+const express_2 = __importDefault(require("express"));
 const router = (0, express_1.Router)();
+router.use(express_2.default.json());
 router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const email = req.params.email;
+        const { email } = req.params;
         console.log(email);
         const user = yield db_1.prisma.doctor.findUnique({
             where: {
@@ -37,87 +42,53 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const payload = req.body;
-        const isUser = yield db_1.prisma.doctor.findUnique({
+        const { email } = req.params;
+        const { name, hospital, city, address, profile, phone, fee, availableDays, availableTimes, // Expecting this to be an array of { startTime, endTime }
+        diseases } = req.body;
+        // Log the payload for debugging
+        console.log("Received payload:", req.body);
+        // Example payload validation (expand as needed)
+        if (!name || !hospital || !city || !address || !profile || !phone || !fee || !availableDays || !availableTimes || !diseases) {
+            console.log("Missing required fields in payload:", req.body);
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+        // Check if user already exists
+        const existingUser = yield db_1.prisma.doctor.findUnique({
             where: {
-                email: req.params.email
+                email
             }
         });
-        if (isUser) {
-            return res.status(200).json({ message: "User already exists!" });
+        if (existingUser) {
+            console.log("User already exists:", email);
+            return res.status(409).json({ message: "User already exists" });
         }
-        const user = yield db_1.prisma.doctor.create({
-            data: Object.assign({}, payload)
+        // Create new user with nested TimeSlot creation
+        const newUser = yield db_1.prisma.doctor.create({
+            data: {
+                email,
+                name,
+                hospital,
+                city,
+                address,
+                profile,
+                phone,
+                fee,
+                availableDays,
+                diseases,
+                availableTimes: {
+                    create: availableTimes.map((timeSlot) => ({
+                        startTime: new Date(timeSlot.startTime),
+                        endTime: new Date(timeSlot.endTime)
+                    }))
+                }
+            }
         });
-        console.log("User Created Successfully!!");
-        if (!user) {
-            return res.status(400).json({ message: "User not registered!" });
-        }
-        return res.json({ message: "User Created" });
+        console.log("New user created:", newUser);
+        return res.json({ message: "User Created", user: newUser });
     }
     catch (error) {
-        res.status(500).json({ message: "Internal Server Error" });
+        console.error("Error creating user:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 }));
-// router.post('/slots/create', async (req: Request, res: Response) => {
-//   try {
-//     const { date, doctorId } = req.body;
-//     if (!date || !doctorId) {
-//       return res.status(400).json({ message: "Date and Doctor ID are required" });
-//     }
-//     const slotDate = new Date(date);
-//     // Check if the slot already exists
-//     const existingSlot = await prisma.slot.findFirst({
-//       where: {
-//         date: slotDate,
-//         doctorId: doctorId,
-//       },
-//     });
-//     if (existingSlot) {
-//       return res.status(400).json({ message: "Slot already exists for the given time" });
-//     }
-//     // Create the new slot
-//     const slot = await prisma.slot.create({
-//       data: {
-//         date: slotDate,
-//         doctor: {
-//           connect: {
-//             id: doctorId,
-//           },
-//         },
-//       },
-//     });
-//     if (!slot) {
-//       return res.status(400).json({ message: "Slot not created!" });
-//     }
-//     return res.json({ message: "Slot Created", slot });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Internal Server Error" });
-//   }
-// });
-// router.get('/slots/:doctorId', async (req: Request, res: Response) => {
-//   try {
-//     const doctorId = req.params.doctorId;
-//     const doctor = await prisma.doctor.findUnique({
-//       where: {
-//         id: doctorId,
-//       },
-//     });
-//     if (!doctor) {
-//       return res.status(400).json({ message: "Doctor not found!" })
-//     }
-//     const slots = await prisma.slot.findMany({
-//       where: {
-//         doctorId: doctorId,
-//       },
-//     });
-//     if (!slots) {
-//       return res.status(400).json({ message: "Slots not found!" })
-//     }
-//     return res.json(slots);
-//   } catch (error) {
-//     res.status(500).json({ message: "Internal Server Error" });
-//   }
-// })
 exports.default = router;
