@@ -91,7 +91,6 @@ router.post('/appointments/create', (req, res) => __awaiter(void 0, void 0, void
         const patientEmail = req.query.patientEmail;
         const { doctorId, date } = req.body;
         const appointmentDate = new Date(date);
-        // Validate the provided date against doctor's availability
         const doctor = yield db_1.prisma.doctor.findUnique({
             where: { id: doctorId },
             include: { availableTimes: true }
@@ -99,27 +98,29 @@ router.post('/appointments/create', (req, res) => __awaiter(void 0, void 0, void
         if (!doctor) {
             return res.status(404).json({ message: "Doctor not found" });
         }
-        // const isTimeAvailable = doctor.availableTimes.some(timeSlot => {
-        //     const startTime = new Date(timeSlot.startTime);
-        //     const endTime = new Date(timeSlot.endTime);
-        //     return appointmentDate >= startTime && appointmentDate <= endTime;
-        // });
-        // if (!isTimeAvailable) {
-        //     return res.status(400).json({ message: "The selected time is not within the doctor's availability." });
-        // }
+        // Check doctor's availability at given time slot
+        const isTimeAvailable = doctor.availableTimes.some(timeSlot => {
+            const startTime = new Date(timeSlot.startTime);
+            const endTime = new Date(timeSlot.endTime);
+            return appointmentDate >= startTime && appointmentDate <= endTime;
+        });
+        if (!isTimeAvailable) {
+            return res.status(400).json({ message: "The selected time is not within the doctor's availability." });
+        }
         // Check for overlapping appointments
-        // const overlappingAppointment = await prisma.appointment.findFirst({
-        //     where: {
-        //         doctorId: doctorId,
-        //         date: {
-        //             gte: appointmentDate,
-        //             lt: new Date(appointmentDate.getTime() + 60 * 60 * 1000) // Assuming 1 hour slots
-        //         }
-        //     }
-        // });
-        // if (overlappingAppointment) {
-        //     return res.status(400).json({ message: "The selected time is already booked." });
-        // }
+        const overlappingAppointment = yield db_1.prisma.appointment.findFirst({
+            where: {
+                doctorId: doctorId,
+                date: {
+                    gte: appointmentDate,
+                    lt: new Date(appointmentDate.getTime() + 60 * 60 * 1000) // Assuming 1 hour slots
+                }
+            }
+        });
+        if (overlappingAppointment) {
+            return res.status(400).json({ message: "The selected time is already booked." });
+        }
+        // create appointment
         const appointment = yield db_1.prisma.appointment.create({
             data: {
                 date: appointmentDate,

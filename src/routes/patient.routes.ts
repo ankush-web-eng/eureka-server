@@ -92,31 +92,33 @@ router.post('/appointments/create', async (req: Request, res: Response) => {
             return res.status(404).json({ message: "Doctor not found" });
         }
 
-        // const isTimeAvailable = doctor.availableTimes.some(timeSlot => {
-        //     const startTime = new Date(timeSlot.startTime);
-        //     const endTime = new Date(timeSlot.endTime);
-        //     return appointmentDate >= startTime && appointmentDate <= endTime;
-        // });
+        // Check doctor's availability at given time slot
+        const isTimeAvailable = doctor.availableTimes.some(timeSlot => {
+            const startTime = new Date(timeSlot.startTime);
+            const endTime = new Date(timeSlot.endTime);
+            return appointmentDate >= startTime && appointmentDate <= endTime;
+        });
 
-        // if (!isTimeAvailable) {
-        //     return res.status(400).json({ message: "The selected time is not within the doctor's availability." });
-        // }
+        if (!isTimeAvailable) {
+            return res.status(400).json({ message: "The selected time is not within the doctor's availability." });
+        }
 
         // Check for overlapping appointments
-        // const overlappingAppointment = await prisma.appointment.findFirst({
-        //     where: {
-        //         doctorId: doctorId,
-        //         date: {
-        //             gte: appointmentDate,
-        //             lt: new Date(appointmentDate.getTime() + 60 * 60 * 1000) // Assuming 1 hour slots
-        //         }
-        //     }
-        // });
+        const overlappingAppointment = await prisma.appointment.findFirst({
+            where: {
+                doctorId: doctorId,
+                date: {
+                    gte: appointmentDate,
+                    lt: new Date(appointmentDate.getTime() + 60 * 60 * 1000) // Assuming 1 hour slots
+                }
+            }
+        });
 
-        // if (overlappingAppointment) {
-        //     return res.status(400).json({ message: "The selected time is already booked." });
-        // }
+        if (overlappingAppointment) {
+            return res.status(400).json({ message: "The selected time is already booked." });
+        }
 
+        // create appointment
         const appointment = await prisma.appointment.create({
             data: {
                 date: appointmentDate,
