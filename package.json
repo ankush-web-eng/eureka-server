@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "tsc -b && node dist/index.js",
     "build": "tsc -b",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "prisma:generate": "prisma generate"
   },
   "keywords": [],
   "author": "",
