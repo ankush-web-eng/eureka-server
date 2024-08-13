@@ -1,12 +1,12 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "tsc -b && node dist/index.js",
     "build": "tsc -b",
     "lint": "eslint . --ext .ts",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "vercel-build": "prisma generate && prisma migrate deploy && tsc -b",
     "prisma:generate": "prisma generate"
   },
   "keywords": [],
