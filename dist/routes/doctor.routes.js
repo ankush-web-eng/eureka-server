@@ -51,7 +51,6 @@ router.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function*
                 isVerified: false
             }
         });
-        console.log(email, password);
         const emailResult = yield (0, sendVerificationMail_1.sendVerificationEmail)(email, verifyCode);
         if (emailResult.success) {
             return res.status(200).json({ message: "Verification code sent to email" });
@@ -73,21 +72,17 @@ router.post('/verify', (req, res) => __awaiter(void 0, void 0, void 0, function*
                 where: { email },
                 data: { isVerified: true }
             });
-            console.log("User verified");
             return res.status(200).json({ message: "User verified successfully" });
         }
-        console.log("Invalid code");
         return res.status(400).json({ message: "Invalid verification code" });
     }
     catch (error) {
-        console.error("Verification error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 }));
 router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = yield req.body;
-        console.log(email, password);
         const user = yield db_1.prisma.doctor.findUnique({
             where: {
                 email
@@ -112,7 +107,6 @@ router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function*
 router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email } = req.params;
-        console.log(email);
         const user = yield db_1.prisma.doctor.findUnique({
             where: {
                 email
@@ -127,7 +121,6 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
         if ((user === null || user === void 0 ? void 0 : user.name) == null) {
             return res.status(201).json({ message: "User not registered!" });
         }
-        console.log(user);
         if (!user) {
             return res.status(201).json({ message: "User not registered!" });
         }
@@ -139,7 +132,6 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 router.post('/user/update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, name, phone, image, availableTimes } = yield req.body;
-    console.log(email, name, phone, image, availableTimes);
     try {
         const isUser = yield db_1.prisma.doctor.findUnique({
             where: {
@@ -173,14 +165,13 @@ router.post('/user/update', (req, res) => __awaiter(void 0, void 0, void 0, func
 }));
 router.post('/hospital/create', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, city, address, fee, availableDays, diseases, image, email } = yield req.body;
-    console.log(name, email, city, address, fee, availableDays, diseases, image);
     try {
-        const isUSer = db_1.prisma.doctor.findUnique({
+        const isUser = db_1.prisma.doctor.findUnique({
             where: {
                 email
             }
         });
-        if (!isUSer) {
+        if (!isUser) {
             return res.status(400).json({ message: "User not registered!" });
         }
         const hospital = yield db_1.prisma.hospital.create({

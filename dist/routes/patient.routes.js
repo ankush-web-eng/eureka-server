@@ -15,7 +15,6 @@ const router = (0, express_1.Router)();
 router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const email = req.params.email;
-        console.log(email);
         const user = yield db_1.prisma.patient.findUnique({
             where: {
                 email
@@ -33,7 +32,6 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 }
             }
         });
-        console.log(user);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -138,11 +136,9 @@ router.post('/appointments/create', (req, res) => __awaiter(void 0, void 0, void
         if (!appointment) {
             return res.status(400).json({ message: "Appointment not created" });
         }
-        console.log(patientEmail, doctorId, date);
         return res.json({ message: "Appointment Created" });
     }
     catch (error) {
-        console.error(error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 }));

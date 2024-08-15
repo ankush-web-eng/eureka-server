@@ -62,15 +62,6 @@ model Staff {
   hospitalId String?
 }
 
-model Slot {
-  id           String        @id @default(uuid())
-  date         DateTime
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  appointments Appointment[]
-  history      History[]
-}
-
 model TimeSlot {
   id        String   @id @default(uuid())
   startTime DateTime
@@ -80,25 +71,23 @@ model TimeSlot {
 }
 
 model Appointment {
-  id        String   @id @default(uuid())
-  date      DateTime
-  disease   String?
-  doctorId  String
-  doctor    Doctor   @relation(fields: [doctorId], references: [id])
-  slotId    String?
-  slot      Slot?    @relation(fields: [slotId], references: [id])
-  patientId String
-  patient   Patient  @relation(fields: [patientId], references: [id])
+  id         String   @id @default(uuid())
+  date       DateTime
+  disease    String?
+  doctorId   String
+  doctor     Doctor   @relation(fields: [doctorId], references: [id])
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  isApproved Boolean  @default(false)
 }
 
 model History {
-  id        String   @id @default(uuid())
-  date      DateTime @default(now())
-  slotId    String
-  disease   String
-  doctorId  String
-  doctor    Doctor   @relation(fields: [doctorId], references: [id])
-  slot      Slot     @relation(fields: [slotId], references: [id])
-  patientId String
-  patient   Patient  @relation(fields: [patientId], references: [id])
+  id              String   @id @default(uuid())
+  date            DateTime @default(now())
+  appointmentDate DateTime
+  disease         String?
+  doctorId        String
+  doctor          Doctor   @relation(fields: [doctorId], references: [id])
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id])
 }

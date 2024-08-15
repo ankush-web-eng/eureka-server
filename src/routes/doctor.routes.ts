@@ -219,5 +219,109 @@ router.post('/hospital/create', async (req: Request, res: Response) => {
   }
 })
 
+router.post("/appointments/approve", async (req: Request, res: Response) => {
+  const { appointmentId } = req.body
+  try {
+    const appointment = await prisma.appointment.findUnique({
+      where: {
+        id: appointmentId
+      }
+    })
+
+    if (!appointment) {
+      return res.status(400).json({ message: "Appointment not found" })
+    }
+
+    await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: { isApproved: true },
+    })
+
+    return res.status(200).json({ message: "Appointment approved successfully" })
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" })
+  }
+})
+
+router.post("/appointments/delete", async (req: Request, res: Response) => {
+  const { appointmentId } = req.body
+  try {
+    const appointment = await prisma.appointment.findUnique({
+      where: {
+        id: appointmentId
+      }
+    })
+
+    if (!appointment) {
+      return res.status(400).json({ message: "Appointment not found" })
+    }
+
+    const transaction = await prisma.$transaction([
+      prisma.history.create({
+        data: {
+          appointmentDate: new Date(appointment.date),
+          doctorId: appointment.doctorId,
+          patientId: appointment.patientId,
+        },
+      }),
+
+      prisma.appointment.delete({
+        where: { id: appointmentId },
+      })
+    ])
+
+    if (!transaction) {
+      return res.status(400).json({ message: "Failed to delete appointment" })
+    }
+
+    return res.status(200).json({ message: "Appointment deleted successfully" })
+  }
+
+  catch (error) {
+    res.status(500).json({ message: "Internal Server Error" })
+  }
+})
+
+
+router.post("/appointment/completed", async (req: Request, res: Response) => {
+  const { appointmentId } = req.body;
+
+  if (!appointmentId) {
+    return res.status(400).json({ message: "Appointment ID is required" });
+  }
+
+  try {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    const transaction = await prisma.$transaction([
+      prisma.history.create({
+        data: {
+          appointmentDate: new Date(appointment.date),
+          doctorId: appointment.doctorId,
+          patientId: appointment.patientId,
+        },
+      }),
+
+      prisma.appointment.delete({
+        where: { id: appointmentId },
+      }),
+    ]);
+
+    if (!transaction) {
+      return res.status(400).json({ message: "Failed to update history" });
+    }
+
+    return res.json({ message: "History updated successfully" });
+  } catch (error) {
+    console.error("Error pushing history:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
 
 export default router;

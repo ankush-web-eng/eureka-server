@@ -36,7 +36,6 @@ function sendVerificationEmail(email, verifyCode) {
             yield new Promise((resolve, reject) => {
                 transporter.sendMail(mailOptions, (err, info) => {
                     if (err) {
-                        console.error(err);
                         reject(err);
                     }
                     else {
