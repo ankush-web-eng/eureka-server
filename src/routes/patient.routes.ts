@@ -54,28 +54,28 @@ router.post("/user/create/:email", async (req: Request, res: Response) => {
     }
 })
 
-router.get('/doctors', async (req: Request, res: Response) => {
-    const city = req.query.city as string;
-    try {
-        const doctors = await prisma.doctor.findMany({
-            where: {
-                city
-            },
-            include: {
-                availableTimes: true,
-                appointments: true,
-                history: true,
-            }
-        })
-        if (!doctors) {
-            return res.status(404).json({ message: "No Doctors found" })
-        }
-        console.log(doctors)
-        res.json(doctors)
-    } catch (error) {
-        res.status(500).json({ message: "Internal Server Error" })
-    }
-})
+// router.get('/doctors', async (req: Request, res: Response) => {
+//     const city = req.query.city as string;
+//     try {
+//         const doctors = await prisma.hospital.findMany({
+//             where: {
+//                 city
+//             },
+//             include: {
+//                 availableTimes: true,
+//                 appointments: true,
+//                 history: true,
+//             }
+//         })
+//         if (!doctors) {
+//             return res.status(404).json({ message: "No Doctors found" })
+//         }
+//         console.log(doctors)
+//         res.json(doctors)
+//     } catch (error) {
+//         res.status(500).json({ message: "Internal Server Error" })
+//     }
+// })
 
 router.post('/appointments/create', async (req: Request, res: Response) => {
     try {

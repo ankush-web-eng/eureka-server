@@ -19,20 +19,47 @@ model Patient {
 model Doctor {
   id             String        @id @default(uuid())
   email          String        @unique
-  name           String
-  hospital       String
-  city           String
-  address        String
-  profile        String
-  phone          String        @unique
-  fee            Int
-  availableDays  Int[]
-  availableTimes TimeSlot[]
-  diseases       String[]
-  appointments   Appointment[]
-  history        History[]
+  password       String
+  name           String?
+  image          String?
+  isVerified     Boolean       @default(false)
+  verifyCode     String
+  phone          String?       @unique
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  history        History[]
+  appointments   Appointment[]
+  hospitalId     String?       @unique
+  hospital       Hospital?     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  availableTimes TimeSlot[]
+}
+
+model Hospital {
+  id            String   @id @default(uuid())
+  name          String
+  city          String
+  address       String
+  image         String
+  fee           Int
+  availableDays Int[]
+  diseases      String[]
+  phones        String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  doctor        Doctor?
+  staff         Staff[]
+}
+
+model Staff {
+  id         String    @id @default(uuid())
+  email      String    @unique
+  name       String?
+  image      String?
+  phone      String?   @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Hospital   Hospital? @relation(fields: [hospitalId], references: [id])
+  hospitalId String?
 }
 
 model Slot {
