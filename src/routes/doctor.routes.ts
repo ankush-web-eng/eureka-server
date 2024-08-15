@@ -46,7 +46,6 @@ router.post('/signup', async (req: Request, res: Response) => {
       }
     })
 
-    console.log(email, password)
     const emailResult = await sendVerificationEmail(email, verifyCode);
     if (emailResult.success) {
       return res.status(200).json({ message: "Verification code sent to email" });
@@ -73,15 +72,12 @@ router.post('/verify', async (req: Request, res: Response) => {
         data: { isVerified: true }
       });
 
-      console.log("User verified");
       return res.status(200).json({ message: "User verified successfully" });
     }
 
-    console.log("Invalid code");
     return res.status(400).json({ message: "Invalid verification code" });
 
   } catch (error) {
-    console.error("Verification error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -90,7 +86,6 @@ router.post('/verify', async (req: Request, res: Response) => {
 router.post('/signin', async (req: Request, res: Response) => {
   try {
     const { email, password } = await req.body;
-    console.log(email, password);
 
     const user = await prisma.doctor.findUnique({
       where: {
@@ -121,7 +116,6 @@ router.post('/signin', async (req: Request, res: Response) => {
 router.get("/user/:email", async (req: Request, res: Response) => {
   try {
     const { email } = req.params
-    console.log(email)
     const user = await prisma.doctor.findUnique({
       where: {
         email
@@ -137,7 +131,6 @@ router.get("/user/:email", async (req: Request, res: Response) => {
     if (user?.name == null) {
       return res.status(201).json({ message: "User not registered!" })
     }
-    console.log(user)
     if (!user) {
       return res.status(201).json({ message: "User not registered!" })
     }
@@ -149,7 +142,6 @@ router.get("/user/:email", async (req: Request, res: Response) => {
 
 router.post('/user/update', async (req: Request, res: Response) => {
   const { email, name, phone, image, availableTimes } = await req.body
-  console.log(email, name, phone, image, availableTimes)
   try {
 
     const isUser = await prisma.doctor.findUnique({
@@ -188,15 +180,14 @@ router.post('/user/update', async (req: Request, res: Response) => {
 
 router.post('/hospital/create', async (req: Request, res: Response) => {
   const { name, city, address, fee, availableDays, diseases, image, email } = await req.body
-  console.log(name, email, city, address, fee, availableDays, diseases, image)
   try {
-    const isUSer = prisma.doctor.findUnique({
+    const isUser = prisma.doctor.findUnique({
       where: {
         email
       }
     })
 
-    if (!isUSer) {
+    if (!isUser) {
       return res.status(400).json({ message: "User not registered!" })
     }
 

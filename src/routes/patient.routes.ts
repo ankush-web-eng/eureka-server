@@ -6,7 +6,6 @@ const router = Router();
 router.get("/user/:email", async (req: Request, res: Response) => {
     try {
         const email = req.params.email
-        console.log(email)
         const user = await prisma.patient.findUnique({
             where: {
                 email
@@ -24,7 +23,6 @@ router.get("/user/:email", async (req: Request, res: Response) => {
                 }
             }
         })
-        console.log(user)
         if (!user) {
             return res.status(404).json({ message: "User not found" })
         }
@@ -139,10 +137,8 @@ router.post('/appointments/create', async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Appointment not created" });
         }
 
-        console.log(patientEmail, doctorId, date);
         return res.json({ message: "Appointment Created" });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
