@@ -186,7 +186,7 @@ router.post('/user/update', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/hospital/update', async (req: Request, res: Response) => {
+router.post('/hospital/create', async (req: Request, res: Response) => {
   const { name, city, address, fee, availableDays, diseases, image, email } = await req.body
   console.log(name, email, city, address, fee, availableDays, diseases, image)
   try {
