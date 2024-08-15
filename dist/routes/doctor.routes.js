@@ -65,8 +65,6 @@ router.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function*
 router.post('/verify', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, code } = req.body;
-        console.log("Email:", email);
-        console.log("Code:", code);
         const user = yield db_1.prisma.doctor.findUnique({
             where: { email }
         });
@@ -126,11 +124,85 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 hospital: true
             }
         });
+        if ((user === null || user === void 0 ? void 0 : user.name) == null) {
+            return res.status(201).json({ message: "User not registered!" });
+        }
         console.log(user);
         if (!user) {
             return res.status(201).json({ message: "User not registered!" });
         }
         return res.json(user);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
+router.post('/user/update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, name, phone, image, availableTimes } = yield req.body;
+    console.log(email, name, phone, image, availableTimes);
+    try {
+        const isUser = yield db_1.prisma.doctor.findUnique({
+            where: {
+                email
+            }
+        });
+        if (!isUser) {
+            return res.status(400).json({ message: "User not registered!" });
+        }
+        const user = yield db_1.prisma.doctor.update({
+            where: {
+                email
+            },
+            data: {
+                name,
+                phone,
+                image,
+                availableTimes: {
+                    create: availableTimes.map((timeSlot) => ({
+                        startTime: new Date(timeSlot.startTime),
+                        endTime: new Date(timeSlot.endTime)
+                    }))
+                }
+            }
+        });
+        return res.status(200).json({ message: "User updated successfully", user });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
+router.post('/hospital/update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, city, address, fee, availableDays, diseases, image, email } = yield req.body;
+    console.log(name, email, city, address, fee, availableDays, diseases, image);
+    try {
+        const isUSer = db_1.prisma.doctor.findUnique({
+            where: {
+                email
+            }
+        });
+        if (!isUSer) {
+            return res.status(400).json({ message: "User not registered!" });
+        }
+        const hospital = yield db_1.prisma.hospital.create({
+            data: {
+                name,
+                city,
+                address,
+                fee,
+                availableDays,
+                diseases,
+                image,
+                doctor: {
+                    connect: {
+                        email
+                    }
+                }
+            }
+        });
+        if (!hospital) {
+            return res.status(500).json({ message: "Failed to update hospital" });
+        }
+        return res.status(200).json({ message: "Hospital updated successfully", hospital });
     }
     catch (error) {
         res.status(500).json({ message: "Internal Server Error" });
