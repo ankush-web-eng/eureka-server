@@ -45,7 +45,14 @@ router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 
     try {
         const email = req.params.email;
         const city = req.body.city;
-        console.log(email, city);
+        const isUserExist = yield db_1.prisma.patient.findUnique({
+            where: {
+                email
+            }
+        });
+        if (isUserExist) {
+            return res.status(200).json({ message: "User already exists" });
+        }
         const user = yield db_1.prisma.patient.create({
             data: {
                 email,
@@ -61,28 +68,30 @@ router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 
         res.status(500).json({ message: "Internal Server Error" });
     }
 }));
-// router.get('/doctors', async (req: Request, res: Response) => {
-//     const city = req.query.city as string;
-//     try {
-//         const doctors = await prisma.hospital.findMany({
-//             where: {
-//                 city
-//             },
-//             include: {
-//                 availableTimes: true,
-//                 appointments: true,
-//                 history: true,
-//             }
-//         })
-//         if (!doctors) {
-//             return res.status(404).json({ message: "No Doctors found" })
-//         }
-//         console.log(doctors)
-//         res.json(doctors)
-//     } catch (error) {
-//         res.status(500).json({ message: "Internal Server Error" })
-//     }
-// })
+router.get('/doctors', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const city = req.query.city;
+    try {
+        const doctors = yield db_1.prisma.hospital.findMany({
+            where: {
+                city
+            },
+            include: {
+                doctor: {
+                    include: {
+                        availableTimes: true,
+                    }
+                }
+            }
+        });
+        if (!doctors) {
+            return res.status(404).json({ message: `No Doctors found ${city}!!` });
+        }
+        res.json(doctors);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
 router.post('/appointments/create', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const patientEmail = req.query.patientEmail;
@@ -95,29 +104,27 @@ router.post('/appointments/create', (req, res) => __awaiter(void 0, void 0, void
         if (!doctor) {
             return res.status(404).json({ message: "Doctor not found" });
         }
-        // Check doctor's availability at given time slot
-        const isTimeAvailable = doctor.availableTimes.some(timeSlot => {
-            const startTime = new Date(timeSlot.startTime);
-            const endTime = new Date(timeSlot.endTime);
-            return appointmentDate >= startTime && appointmentDate <= endTime;
-        });
-        if (!isTimeAvailable) {
-            return res.status(400).json({ message: "The selected time is not within the doctor's availability." });
-        }
+        // const isTimeAvailable = doctor.availableTimes.some(timeSlot => {
+        //     const startTime = new Date(timeSlot.startTime);
+        //     const endTime = new Date(timeSlot.endTime);
+        //     return appointmentDate >= startTime && appointmentDate <= endTime;
+        // });
+        // if (!isTimeAvailable) {
+        //     return res.status(400).json({ message: "The selected time is not within the doctor's availability." });
+        // }
         // Check for overlapping appointments
-        const overlappingAppointment = yield db_1.prisma.appointment.findFirst({
-            where: {
-                doctorId: doctorId,
-                date: {
-                    gte: appointmentDate,
-                    lt: new Date(appointmentDate.getTime() + 60 * 60 * 1000) // Assuming 1 hour slots
-                }
-            }
-        });
-        if (overlappingAppointment) {
-            return res.status(400).json({ message: "The selected time is already booked." });
-        }
-        // create appointment
+        // const overlappingAppointment = await prisma.appointment.findFirst({
+        //     where: {
+        //         doctorId: doctorId,
+        //         date: {
+        //             gte: appointmentDate,
+        //             lt: new Date(appointmentDate.getTime() + 60 * 60 * 1000) // Assuming 1 hour slots
+        //         }
+        //     }
+        // });
+        // if (overlappingAppointment) {
+        //     return res.status(400).json({ message: "The selected time is already booked." });
+        // }
         const appointment = yield db_1.prisma.appointment.create({
             data: {
                 date: appointmentDate,

@@ -199,4 +199,91 @@ router.post('/hospital/create', (req, res) => __awaiter(void 0, void 0, void 0, 
         res.status(500).json({ message: "Internal Server Error" });
     }
 }));
+router.post("/appointments/approve", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { appointmentId } = req.body;
+    try {
+        const appointment = yield db_1.prisma.appointment.findUnique({
+            where: {
+                id: appointmentId
+            }
+        });
+        if (!appointment) {
+            return res.status(400).json({ message: "Appointment not found" });
+        }
+        yield db_1.prisma.appointment.update({
+            where: { id: appointmentId },
+            data: { isApproved: true },
+        });
+        return res.status(200).json({ message: "Appointment approved successfully" });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
+router.post("/appointments/delete", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { appointmentId } = req.body;
+    try {
+        const appointment = yield db_1.prisma.appointment.findUnique({
+            where: {
+                id: appointmentId
+            }
+        });
+        if (!appointment) {
+            return res.status(400).json({ message: "Appointment not found" });
+        }
+        const transaction = yield db_1.prisma.$transaction([
+            db_1.prisma.history.create({
+                data: {
+                    appointmentDate: new Date(appointment.date),
+                    doctorId: appointment.doctorId,
+                    patientId: appointment.patientId,
+                },
+            }),
+            db_1.prisma.appointment.delete({
+                where: { id: appointmentId },
+            })
+        ]);
+        if (!transaction) {
+            return res.status(400).json({ message: "Failed to delete appointment" });
+        }
+        return res.status(200).json({ message: "Appointment deleted successfully" });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
+router.post("/appointment/completed", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { appointmentId } = req.body;
+    if (!appointmentId) {
+        return res.status(400).json({ message: "Appointment ID is required" });
+    }
+    try {
+        const appointment = yield db_1.prisma.appointment.findUnique({
+            where: { id: appointmentId },
+        });
+        if (!appointment) {
+            return res.status(404).json({ message: "Appointment not found" });
+        }
+        const transaction = yield db_1.prisma.$transaction([
+            db_1.prisma.history.create({
+                data: {
+                    appointmentDate: new Date(appointment.date),
+                    doctorId: appointment.doctorId,
+                    patientId: appointment.patientId,
+                },
+            }),
+            db_1.prisma.appointment.delete({
+                where: { id: appointmentId },
+            }),
+        ]);
+        if (!transaction) {
+            return res.status(400).json({ message: "Failed to update history" });
+        }
+        return res.json({ message: "History updated successfully" });
+    }
+    catch (error) {
+        console.error("Error pushing history:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
 exports.default = router;
