@@ -22,12 +22,20 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
             include: {
                 appointments: {
                     include: {
-                        doctor: true
+                        doctor: {
+                            include: {
+                                hospital: true
+                            }
+                        }
                     }
                 },
                 history: {
                     include: {
-                        doctor: true
+                        doctor: {
+                            include: {
+                                hospital: true
+                            }
+                        }
                     }
                 }
             }
@@ -44,7 +52,7 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
 router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const email = req.params.email;
-        const city = req.body.city;
+        const { city, name } = req.body;
         const isUserExist = yield db_1.prisma.patient.findUnique({
             where: {
                 email
@@ -56,7 +64,8 @@ router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 
         const user = yield db_1.prisma.patient.create({
             data: {
                 email,
-                city
+                city,
+                name
             }
         });
         if (!user) {

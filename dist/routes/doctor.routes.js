@@ -16,7 +16,10 @@ const express_1 = require("express");
 const db_1 = require("../lib/db");
 const express_2 = __importDefault(require("express"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const sendVerificationMail_1 = require("../helpers/sendVerificationMail");
+const VerificationMail_1 = require("../emails/VerificationMail");
+const AppointmentAcceptedMail_1 = require("../emails/AppointmentAcceptedMail");
+const AppointmentRejected_1 = require("../emails/AppointmentRejected");
+const AppointmentSuccess_1 = require("../emails/AppointmentSuccess");
 const router = (0, express_1.Router)();
 router.use(express_2.default.json());
 router.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -51,7 +54,7 @@ router.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function*
                 isVerified: false
             }
         });
-        const emailResult = yield (0, sendVerificationMail_1.sendVerificationEmail)(email, verifyCode);
+        const emailResult = yield (0, VerificationMail_1.sendVerificationEmail)(email, verifyCode);
         if (emailResult.success) {
             return res.status(200).json({ message: "Verification code sent to email" });
         }
@@ -112,8 +115,16 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 email
             },
             include: {
-                appointments: true,
-                history: true,
+                appointments: {
+                    include: {
+                        patient: true
+                    }
+                },
+                history: {
+                    include: {
+                        patient: true
+                    }
+                },
                 availableTimes: true,
                 hospital: true
             }
@@ -214,13 +225,24 @@ router.post("/appointments/approve", (req, res) => __awaiter(void 0, void 0, voi
             where: { id: appointmentId },
             data: { isApproved: true },
         });
-        return res.status(200).json({ message: "Appointment approved successfully" });
+        const doctor = yield db_1.prisma.doctor.findUnique({
+            where: {
+                id: appointment.doctorId
+            }
+        });
+        const patient = yield db_1.prisma.patient.findUnique({
+            where: {
+                id: appointment.patientId
+            }
+        });
+        const emailResult = yield (0, AppointmentAcceptedMail_1.sendAppointmentAcceptedMail)((patient === null || patient === void 0 ? void 0 : patient.email) || '', (patient === null || patient === void 0 ? void 0 : patient.name) || '', (doctor === null || doctor === void 0 ? void 0 : doctor.name) || '');
+        return res.json({ message: "Appointment approved successfully" });
     }
     catch (error) {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }));
-router.post("/appointments/delete", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/appointments/reject", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { appointmentId } = req.body;
     try {
         const appointment = yield db_1.prisma.appointment.findUnique({
@@ -243,16 +265,27 @@ router.post("/appointments/delete", (req, res) => __awaiter(void 0, void 0, void
                 where: { id: appointmentId },
             })
         ]);
+        const doctor = yield db_1.prisma.doctor.findUnique({
+            where: {
+                id: appointment.doctorId
+            }
+        });
+        const patient = yield db_1.prisma.patient.findUnique({
+            where: {
+                id: appointment.patientId
+            }
+        });
+        const emailResult = yield (0, AppointmentRejected_1.sendAppointmentRejectedMail)((patient === null || patient === void 0 ? void 0 : patient.email) || '', (patient === null || patient === void 0 ? void 0 : patient.name) || '', (doctor === null || doctor === void 0 ? void 0 : doctor.name) || '');
         if (!transaction) {
             return res.status(400).json({ message: "Failed to delete appointment" });
         }
-        return res.status(200).json({ message: "Appointment deleted successfully" });
+        return res.json({ message: "Appointment deleted successfully" });
     }
     catch (error) {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }));
-router.post("/appointment/completed", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/appointments/completed", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { appointmentId } = req.body;
     if (!appointmentId) {
         return res.status(400).json({ message: "Appointment ID is required" });
@@ -265,6 +298,10 @@ router.post("/appointment/completed", (req, res) => __awaiter(void 0, void 0, vo
             return res.status(404).json({ message: "Appointment not found" });
         }
         const transaction = yield db_1.prisma.$transaction([
+            db_1.prisma.appointment.update({
+                where: { id: appointmentId },
+                data: { isApproved: true },
+            }),
             db_1.prisma.history.create({
                 data: {
                     appointmentDate: new Date(appointment.date),
@@ -279,6 +316,17 @@ router.post("/appointment/completed", (req, res) => __awaiter(void 0, void 0, vo
         if (!transaction) {
             return res.status(400).json({ message: "Failed to update history" });
         }
+        const doctor = yield db_1.prisma.doctor.findUnique({
+            where: {
+                id: appointment.doctorId
+            }
+        });
+        const patient = yield db_1.prisma.patient.findUnique({
+            where: {
+                id: appointment.patientId
+            }
+        });
+        const emailResult = yield (0, AppointmentSuccess_1.sendAppointmentSuccessMail)((patient === null || patient === void 0 ? void 0 : patient.email) || '', (patient === null || patient === void 0 ? void 0 : patient.name) || '', (doctor === null || doctor === void 0 ? void 0 : doctor.name) || '');
         return res.json({ message: "History updated successfully" });
     }
     catch (error) {

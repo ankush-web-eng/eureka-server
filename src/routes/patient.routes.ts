@@ -14,12 +14,20 @@ router.get("/user/:email", async (req: Request, res: Response) => {
             include: {
                 appointments: {
                     include: {
-                        doctor: true
+                        doctor: {
+                            include: {
+                                hospital: true
+                            }
+                        }
                     }
                 },
                 history: {
                     include: {
-                        doctor: true
+                        doctor: {
+                            include : {
+                                hospital: true
+                            }
+                        }
                     }
                 }
             }

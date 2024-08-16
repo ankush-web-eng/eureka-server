@@ -320,7 +320,7 @@ router.post("/appointments/reject", async (req: Request, res: Response) => {
 })
 
 
-router.post("/appointment/completed", async (req: Request, res: Response) => {
+router.post("/appointments/completed", async (req: Request, res: Response) => {
   const { appointmentId } = req.body;
 
   if (!appointmentId) {
