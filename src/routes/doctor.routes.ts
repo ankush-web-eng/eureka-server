@@ -1,11 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/db';
-import expres from 'express';
+import express from 'express';
 import bcrypt from 'bcryptjs';
-import { sendVerificationEmail } from '../helpers/sendVerificationMail';
+import { sendVerificationEmail } from "../emails/VerificationMail"
+import { sendAppointmentAcceptedMail } from '../emails/AppointmentAcceptedMail';
+import { sendAppointmentRejectedMail } from '../emails/AppointmentRejected';
+import { sendAppointmentSuccessMail } from '../emails/AppointmentSuccess';
 
 const router = Router();
-router.use(expres.json())
+router.use(express.json())
 
 router.post('/signup', async (req: Request, res: Response) => {
   try {
@@ -121,8 +124,16 @@ router.get("/user/:email", async (req: Request, res: Response) => {
         email
       },
       include: {
-        appointments: true,
-        history: true,
+        appointments: {
+          include: {
+            patient: true
+          }
+        },
+        history: {
+          include: {
+            patient: true
+          }
+        },
         availableTimes: true,
         hospital: true
       }
@@ -235,15 +246,29 @@ router.post("/appointments/approve", async (req: Request, res: Response) => {
     await prisma.appointment.update({
       where: { id: appointmentId },
       data: { isApproved: true },
+    });
+
+    const doctor = await prisma.doctor.findUnique({
+      where: {
+        id: appointment.doctorId
+      }
     })
 
-    return res.status(200).json({ message: "Appointment approved successfully" })
+    const patient = await prisma.patient.findUnique({
+      where: {
+        id: appointment.patientId
+      }
+    })
+
+    const emailResult = await sendAppointmentAcceptedMail(patient?.email || '', patient?.name || '', doctor?.name || '');
+
+    return res.json({ message: "Appointment approved successfully" })
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" })
   }
 })
 
-router.post("/appointments/delete", async (req: Request, res: Response) => {
+router.post("/appointments/reject", async (req: Request, res: Response) => {
   const { appointmentId } = req.body
   try {
     const appointment = await prisma.appointment.findUnique({
@@ -270,14 +295,26 @@ router.post("/appointments/delete", async (req: Request, res: Response) => {
       })
     ])
 
+    const doctor = await prisma.doctor.findUnique({
+      where: {
+        id: appointment.doctorId
+      }
+    })
+
+    const patient = await prisma.patient.findUnique({
+      where: {
+        id: appointment.patientId
+      }
+    })
+
+    const emailResult = await sendAppointmentRejectedMail(patient?.email || '', patient?.name || '', doctor?.name || '');
+
     if (!transaction) {
       return res.status(400).json({ message: "Failed to delete appointment" })
     }
 
-    return res.status(200).json({ message: "Appointment deleted successfully" })
-  }
-
-  catch (error) {
+    return res.json({ message: "Appointment deleted successfully" })
+  } catch (error) {
     res.status(500).json({ message: "Internal Server Error" })
   }
 })
@@ -300,6 +337,11 @@ router.post("/appointment/completed", async (req: Request, res: Response) => {
     }
 
     const transaction = await prisma.$transaction([
+      prisma.appointment.update({
+        where: { id: appointmentId },
+        data: { isApproved: true },
+      }),
+
       prisma.history.create({
         data: {
           appointmentDate: new Date(appointment.date),
@@ -316,6 +358,20 @@ router.post("/appointment/completed", async (req: Request, res: Response) => {
     if (!transaction) {
       return res.status(400).json({ message: "Failed to update history" });
     }
+
+    const doctor = await prisma.doctor.findUnique({
+      where: {
+        id: appointment.doctorId
+      }
+    })
+
+    const patient = await prisma.patient.findUnique({
+      where: {
+        id: appointment.patientId
+      }
+    })
+
+    const emailResult = await sendAppointmentSuccessMail(patient?.email || '', patient?.name || '', doctor?.name || '');
 
     return res.json({ message: "History updated successfully" });
   } catch (error) {

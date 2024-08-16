@@ -14,6 +14,7 @@ model Patient {
   city         String
   appointments Appointment[]
   history      History[]
+  name         String?
 }
 
 model Doctor {

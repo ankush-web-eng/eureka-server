@@ -36,7 +36,7 @@ router.get("/user/:email", async (req: Request, res: Response) => {
 router.post("/user/create/:email", async (req: Request, res: Response) => {
     try {
         const email = req.params.email;
-        const city = req.body.city;
+        const { city, name } = req.body;
 
         const isUserExist = await prisma.patient.findUnique({
             where: {
@@ -51,7 +51,8 @@ router.post("/user/create/:email", async (req: Request, res: Response) => {
         const user = await prisma.patient.create({
             data: {
                 email,
-                city
+                city,
+                name
             }
         })
 
