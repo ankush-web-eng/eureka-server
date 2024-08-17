@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/db'
+import { cacheDoctorData, getCachedDoctorData } from '../lib/redis';
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.get("/user/:email", async (req: Request, res: Response) => {
                 history: {
                     include: {
                         doctor: {
-                            include : {
+                            include: {
                                 hospital: true
                             }
                         }
@@ -76,6 +77,14 @@ router.post("/user/create/:email", async (req: Request, res: Response) => {
 router.get('/doctors', async (req: Request, res: Response) => {
     const city = req.query.city as string;
 
+    const cacheKey = `doctors:${city}`;
+
+    const cachedDoctors = await getCachedDoctorData(cacheKey);
+
+    if (cachedDoctors) {
+        return res.json(cachedDoctors);
+    }
+
     try {
         const doctors = await prisma.hospital.findMany({
             where: {
@@ -92,6 +101,9 @@ router.get('/doctors', async (req: Request, res: Response) => {
         if (!doctors) {
             return res.status(404).json({ message: `No Doctors found ${city}!!` })
         }
+
+        await cacheDoctorData(cacheKey, doctors, 900);
+
         res.json(doctors);
     } catch (error) {
         res.status(500).json({ message: "Internal Server Error" })
