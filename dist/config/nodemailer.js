@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transporter = void 0;
 const nodemailer = require('nodemailer');
+require('dotenv').config();
 exports.transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,

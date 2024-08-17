@@ -8,7 +8,6 @@ const doctor_routes_1 = __importDefault(require("./routes/doctor.routes"));
 const patient_routes_1 = __importDefault(require("./routes/patient.routes"));
 const v1_routes_1 = __importDefault(require("./routes/v1.routes"));
 const cors_1 = __importDefault(require("cors"));
-// import {Country,State,City} from 'country-state-city'
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({

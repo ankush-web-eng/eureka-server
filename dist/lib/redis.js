@@ -13,6 +13,7 @@ exports.redisClient = void 0;
 exports.cacheDoctorData = cacheDoctorData;
 exports.getCachedDoctorData = getCachedDoctorData;
 const redis_1 = require("redis");
+require('dotenv').config();
 const redisClient = (0, redis_1.createClient)({
     url: process.env.REDIS_URL,
 });
