@@ -3,8 +3,6 @@ import doctorRoutes from './routes/doctor.routes';
 import patientRoutes from './routes/patient.routes';
 import v1Routes from './routes/v1.routes';
 import cors from 'cors'
-// import {Country,State,City} from 'country-state-city'
-
 const app: Application = express();
 
 app.use(express.json());
