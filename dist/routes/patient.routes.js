@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const db_1 = require("../lib/db");
+const redis_1 = require("../lib/redis");
 const router = (0, express_1.Router)();
 router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -79,6 +80,11 @@ router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 
 }));
 router.get('/doctors', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const city = req.query.city;
+    const cacheKey = `doctors:${city}`;
+    const cachedDoctors = yield (0, redis_1.getCachedDoctorData)(cacheKey);
+    if (cachedDoctors) {
+        return res.json(cachedDoctors);
+    }
     try {
         const doctors = yield db_1.prisma.hospital.findMany({
             where: {
@@ -95,6 +101,7 @@ router.get('/doctors', (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (!doctors) {
             return res.status(404).json({ message: `No Doctors found ${city}!!` });
         }
+        yield (0, redis_1.cacheDoctorData)(cacheKey, doctors, 900);
         res.json(doctors);
     }
     catch (error) {
