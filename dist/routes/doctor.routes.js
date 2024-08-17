@@ -334,4 +334,66 @@ router.post("/appointments/completed", (req, res) => __awaiter(void 0, void 0, v
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }));
+router.post('/reset/email', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email } = req.body;
+        const user = yield db_1.prisma.doctor.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+        let verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+        yield db_1.prisma.doctor.update({
+            where: { email },
+            data: { verifyCode }
+        });
+        const emailResult = yield (0, VerificationMail_1.sendVerificationEmail)(email, verifyCode);
+        if (emailResult.success) {
+            return res.status(200).json({ message: "Verification code sent to email" });
+        }
+        return res.status(500).json({ message: "Failed to send verification code" });
+    }
+    catch (error) {
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
+router.post('/reset/code', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, code } = req.body;
+    try {
+        const user = yield db_1.prisma.doctor.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+        if (user.verifyCode === code) {
+            return res.status(200).json({ message: "Verification code is correct" });
+        }
+        return res.status(400).json({ message: "Invalid verification code" });
+    }
+    catch (error) {
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
+router.post('/reset/password', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = req.body;
+    try {
+        const user = yield db_1.prisma.doctor.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+        const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
+        yield db_1.prisma.doctor.update({
+            where: { email },
+            data: { password: hashedPassword }
+        });
+        return res.json({ message: "Password updated successfully" });
+    }
+    catch (error) {
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
 exports.default = router;

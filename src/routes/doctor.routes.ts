@@ -380,4 +380,81 @@ router.post("/appointments/completed", async (req: Request, res: Response) => {
   }
 });
 
+router.post('/reset/email', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.doctor.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    let verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await prisma.doctor.update({
+      where: { email },
+      data: { verifyCode }
+    });
+
+    const emailResult = await sendVerificationEmail(email, verifyCode);
+
+    if (emailResult.success) {
+      return res.status(200).json({ message: "Verification code sent to email" });
+    }
+
+    return res.status(500).json({ message: "Failed to send verification code" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.post('/reset/code', async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+
+  try {
+    const user = await prisma.doctor.findUnique({
+      where: { email }
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    if (user.verifyCode === code) {
+      return res.status(200).json({ message: "Verification code is correct" });
+    }
+
+    return res.status(400).json({ message: "Invalid verification code" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.post('/reset/password', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await prisma.doctor.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.doctor.update({
+      where: { email },
+      data: { password: hashedPassword }
+    });
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 export default router;
