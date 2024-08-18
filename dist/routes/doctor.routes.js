@@ -152,23 +152,30 @@ router.post('/user/update', (req, res) => __awaiter(void 0, void 0, void 0, func
         if (!isUser) {
             return res.status(400).json({ message: "User not registered!" });
         }
-        const user = yield db_1.prisma.doctor.update({
-            where: {
-                email
-            },
-            data: {
-                name,
-                phone,
-                image,
-                availableTimes: {
-                    create: availableTimes.map((timeSlot) => ({
-                        startTime: new Date(timeSlot.startTime),
-                        endTime: new Date(timeSlot.endTime)
-                    }))
+        const transaction = yield db_1.prisma.$transaction([
+            db_1.prisma.timeSlot.deleteMany({
+                where: {
+                    doctorId: isUser.id
                 }
-            }
-        });
-        return res.status(200).json({ message: "User updated successfully", user });
+            }),
+            db_1.prisma.doctor.update({
+                where: {
+                    email
+                },
+                data: {
+                    name,
+                    phone,
+                    image,
+                    availableTimes: {
+                        create: availableTimes.map((timeSlot) => ({
+                            startTime: new Date(timeSlot.startTime),
+                            endTime: new Date(timeSlot.endTime)
+                        }))
+                    }
+                }
+            })
+        ]);
+        return res.status(200).json({ message: "User updated successfully" });
     }
     catch (error) {
         res.status(500).json({ message: "Internal Server Error" });

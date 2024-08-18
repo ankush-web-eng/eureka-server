@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Country, State, City } from "country-state-city"
+import { Country, State, City } from "country-state-city";
 const router = Router();
 
 router.get("/countries", (req: Request, res: Response) => {
@@ -7,8 +7,8 @@ router.get("/countries", (req: Request, res: Response) => {
     const simplifiedCountries = countries.map(country => ({
         name: country.name,
         isoCode: country.isoCode
-    }))
-    return res.json(simplifiedCountries)
+    }));
+    return res.json(simplifiedCountries);
 });
 
 router.get("/states", (req, res) => {
@@ -29,7 +29,7 @@ router.get("/cities", (req, res) => {
     const simplifiedCities = cities.map(city => ({
         name: city.name,
     }));
-    return res.json(simplifiedCities)
+    return res.json(simplifiedCities);
 })
 
 export default router;

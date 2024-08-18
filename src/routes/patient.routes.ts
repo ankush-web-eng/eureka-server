@@ -34,13 +34,13 @@ router.get("/user/:email", async (req: Request, res: Response) => {
             }
         })
         if (!user) {
-            return res.status(404).json({ message: "User not found" })
+            return res.status(404).json({ message: "User not found" });
         }
         return res.json(user);
     } catch (error) {
-        res.status(500).json({ message: "Internal Server Error" })
+        res.status(500).json({ message: "Internal Server Error" });
     }
-})
+});
 
 router.post("/user/create/:email", async (req: Request, res: Response) => {
     try {
@@ -51,10 +51,19 @@ router.post("/user/create/:email", async (req: Request, res: Response) => {
             where: {
                 email
             }
-        })
+        });
 
         if (isUserExist) {
-            return res.status(200).json({ message: "User already exists" })
+            await prisma.patient.update({
+                where: {
+                    email
+                },
+                data: {
+                    city,
+                    name
+                }
+            });
+            return res.status(200).json({ message: "User already exists" });
         }
 
         const user = await prisma.patient.create({
@@ -66,7 +75,7 @@ router.post("/user/create/:email", async (req: Request, res: Response) => {
         })
 
         if (!user) {
-            return res.status(404).json({ message: "User Creation failed" })
+            return res.status(404).json({ message: "User Creation failed" });
         }
         return res.json(user);
     } catch (error) {
@@ -97,7 +106,7 @@ router.get('/doctors', async (req: Request, res: Response) => {
                     }
                 }
             }
-        })
+        });
         if (!doctors) {
             return res.status(404).json({ message: `No Doctors found ${city}!!` })
         }

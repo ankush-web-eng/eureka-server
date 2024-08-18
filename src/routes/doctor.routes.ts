@@ -165,24 +165,32 @@ router.post('/user/update', async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User not registered!" })
     }
 
-    const user = await prisma.doctor.update({
-      where: {
-        email
-      },
-      data: {
-        name,
-        phone,
-        image,
-        availableTimes: {
-          create: availableTimes.map((timeSlot: { startTime: Date, endTime: Date }) => ({
-            startTime: new Date(timeSlot.startTime),
-            endTime: new Date(timeSlot.endTime)
-          }))
+    const transaction = await prisma.$transaction([
+      prisma.timeSlot.deleteMany({
+        where: {
+          doctorId: isUser.id
         }
-      }
-    })
+      }),
 
-    return res.status(200).json({ message: "User updated successfully", user })
+      prisma.doctor.update({
+        where: {
+          email
+        },
+        data: {
+          name,
+          phone,
+          image,
+          availableTimes: {
+            create: availableTimes.map((timeSlot: { startTime: Date, endTime: Date }) => ({
+              startTime: new Date(timeSlot.startTime),
+              endTime: new Date(timeSlot.endTime)
+            }))
+          }
+        }
+      })
+    ])
+
+    return res.status(200).json({ message: "User updated successfully" })
 
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" })

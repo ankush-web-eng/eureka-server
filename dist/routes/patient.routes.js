@@ -60,6 +60,15 @@ router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 
             }
         });
         if (isUserExist) {
+            yield db_1.prisma.patient.update({
+                where: {
+                    email
+                },
+                data: {
+                    city,
+                    name
+                }
+            });
             return res.status(200).json({ message: "User already exists" });
         }
         const user = yield db_1.prisma.patient.create({
