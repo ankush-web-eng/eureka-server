@@ -198,16 +198,42 @@ router.post('/user/update', async (req: Request, res: Response) => {
 })
 
 router.post('/hospital/create', async (req: Request, res: Response) => {
-  const { name, city, address, fee, availableDays, diseases, image, email } = await req.body
+  const { name, city, address, fee, availableDays, diseases, image, email, id } = await req.body
   try {
     const isUser = prisma.doctor.findUnique({
       where: {
         email
       }
-    })
+    });
 
     if (!isUser) {
       return res.status(400).json({ message: "User not registered!" })
+    }
+
+    if (id) {
+      const isHospital = await prisma.hospital.findUnique({
+        where: {
+          id
+        }
+      });
+
+      if (isHospital) {
+        const updatedHospital = await prisma.hospital.update({
+          where: {
+            id
+          },
+          data: {
+            name,
+            city,
+            address,
+            fee,
+            availableDays,
+            diseases,
+            image,
+          }
+        })
+        return res.status(200).json({ message: "Hospital created successfully" });
+      }
     }
 
     const hospital = await prisma.hospital.create({
@@ -225,16 +251,16 @@ router.post('/hospital/create', async (req: Request, res: Response) => {
           }
         }
       }
-    })
+    });
 
     if (!hospital) {
-      return res.status(500).json({ message: "Failed to update hospital" })
+      return res.status(500).json({ message: "Failed to update hospital" });
     }
 
-    return res.status(200).json({ message: "Hospital updated successfully", hospital })
+    return res.status(200).json({ message: "Hospital updated successfully", hospital });
 
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error" })
+    res.status(500).json({ message: "Internal Server Error" });
   }
 })
 
@@ -383,7 +409,6 @@ router.post("/appointments/completed", async (req: Request, res: Response) => {
 
     return res.json({ message: "History updated successfully" });
   } catch (error) {
-    console.error("Error pushing history:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });

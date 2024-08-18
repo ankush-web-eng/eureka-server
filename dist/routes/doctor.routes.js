@@ -182,15 +182,41 @@ router.post('/user/update', (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 }));
 router.post('/hospital/create', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, city, address, fee, availableDays, diseases, image, email } = yield req.body;
+    const { name, city, address, fee, availableDays, diseases, image, email, id } = yield req.body;
     try {
         const isUser = db_1.prisma.doctor.findUnique({
             where: {
                 email
             }
         });
+        console.log("id is", id);
         if (!isUser) {
             return res.status(400).json({ message: "User not registered!" });
+        }
+        if (id) {
+            const isHospital = yield db_1.prisma.hospital.findUnique({
+                where: {
+                    id
+                }
+            });
+            if (isHospital) {
+                const updatedHospital = yield db_1.prisma.hospital.update({
+                    where: {
+                        id
+                    },
+                    data: {
+                        name,
+                        city,
+                        address,
+                        fee,
+                        availableDays,
+                        diseases,
+                        image,
+                    }
+                });
+                console.log("updated hospital is", updatedHospital);
+                return res.status(200).json({ message: "Hospital created successfully" });
+            }
         }
         const hospital = yield db_1.prisma.hospital.create({
             data: {
@@ -208,6 +234,7 @@ router.post('/hospital/create', (req, res) => __awaiter(void 0, void 0, void 0, 
                 }
             }
         });
+        console.log("hospital is", hospital);
         if (!hospital) {
             return res.status(500).json({ message: "Failed to update hospital" });
         }
