@@ -189,7 +189,6 @@ router.post('/hospital/create', (req, res) => __awaiter(void 0, void 0, void 0, 
                 email
             }
         });
-        console.log("id is", id);
         if (!isUser) {
             return res.status(400).json({ message: "User not registered!" });
         }
@@ -214,7 +213,6 @@ router.post('/hospital/create', (req, res) => __awaiter(void 0, void 0, void 0, 
                         image,
                     }
                 });
-                console.log("updated hospital is", updatedHospital);
                 return res.status(200).json({ message: "Hospital created successfully" });
             }
         }
@@ -234,7 +232,6 @@ router.post('/hospital/create', (req, res) => __awaiter(void 0, void 0, void 0, 
                 }
             }
         });
-        console.log("hospital is", hospital);
         if (!hospital) {
             return res.status(500).json({ message: "Failed to update hospital" });
         }
@@ -364,7 +361,6 @@ router.post("/appointments/completed", (req, res) => __awaiter(void 0, void 0, v
         return res.json({ message: "History updated successfully" });
     }
     catch (error) {
-        console.error("Error pushing history:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }));

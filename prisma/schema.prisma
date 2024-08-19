@@ -49,6 +49,8 @@ model Hospital {
   updatedAt     DateTime @updatedAt
   doctor        Doctor?
   staff         Staff[]
+
+  @@index([city])
 }
 
 model Staff {
