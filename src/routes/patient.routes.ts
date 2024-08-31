@@ -81,12 +81,15 @@ router.post("/user/create/:email", async (req: Request, res: Response) => {
     } catch (error) {
         res.status(500).json({ message: "Internal Server Error" })
     }
-})
+});
 
 router.get('/doctors', async (req: Request, res: Response) => {
     const city = req.query.city as string;
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
 
-    const cacheKey = `doctors:${city}`;
+    const cacheKey = `doctors:${city}:page:${page}:limit:${limit}`;
 
     const cachedDoctors = await getCachedDoctorData(cacheKey);
 
@@ -95,29 +98,47 @@ router.get('/doctors', async (req: Request, res: Response) => {
     }
 
     try {
-        const doctors = await prisma.hospital.findMany({
-            where: {
-                city
-            },
-            include: {
-                doctor: {
-                    include: {
-                        availableTimes: true,
+        const [doctors, totalDoctors] = await Promise.all([
+            prisma.hospital.findMany({
+                where: { city },
+                include: {
+                    doctor: {
+                        include: {
+                            availableTimes: true,
+                        }
                     }
-                }
-            }
-        });
-        if (!doctors) {
-            return res.status(404).json({ message: `No Doctors found ${city}!!` })
+                },
+                skip: offset,
+                take: limit,
+            }),
+            prisma.hospital.count({
+                where: { city },
+            }),
+        ]);
+
+        if (doctors.length === 0) {
+            return res.status(404).json({ message: `No Doctors found in ${city}!!` });
         }
 
-        await cacheDoctorData(cacheKey, doctors, 900);
+        const totalPages = Math.ceil(totalDoctors / limit);
 
-        res.json(doctors);
+        const response = {
+            doctors,
+            meta: {
+                totalDoctors,
+                totalPages,
+                currentPage: page,
+            }
+        };
+
+        await cacheDoctorData(cacheKey, response, 900);
+
+        res.json(response);
     } catch (error) {
-        res.status(500).json({ message: "Internal Server Error" })
+        res.status(500).json({ message: "Internal Server Error" });
     }
-})
+});
+
 
 router.post('/appointments/create', async (req: Request, res: Response) => {
     try {

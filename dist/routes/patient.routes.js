@@ -89,29 +89,46 @@ router.post("/user/create/:email", (req, res) => __awaiter(void 0, void 0, void 
 }));
 router.get('/doctors', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const city = req.query.city;
-    const cacheKey = `doctors:${city}`;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const offset = (page - 1) * limit;
+    const cacheKey = `doctors:${city}:page:${page}:limit:${limit}`;
     const cachedDoctors = yield (0, redis_1.getCachedDoctorData)(cacheKey);
     if (cachedDoctors) {
         return res.json(cachedDoctors);
     }
     try {
-        const doctors = yield db_1.prisma.hospital.findMany({
-            where: {
-                city
-            },
-            include: {
-                doctor: {
-                    include: {
-                        availableTimes: true,
+        const [doctors, totalDoctors] = yield Promise.all([
+            db_1.prisma.hospital.findMany({
+                where: { city },
+                include: {
+                    doctor: {
+                        include: {
+                            availableTimes: true,
+                        }
                     }
-                }
-            }
-        });
-        if (!doctors) {
-            return res.status(404).json({ message: `No Doctors found ${city}!!` });
+                },
+                skip: offset,
+                take: limit,
+            }),
+            db_1.prisma.hospital.count({
+                where: { city },
+            }),
+        ]);
+        if (doctors.length === 0) {
+            return res.status(404).json({ message: `No Doctors found in ${city}!!` });
         }
-        yield (0, redis_1.cacheDoctorData)(cacheKey, doctors, 900);
-        res.json(doctors);
+        const totalPages = Math.ceil(totalDoctors / limit);
+        const response = {
+            doctors,
+            meta: {
+                totalDoctors,
+                totalPages,
+                currentPage: page,
+            }
+        };
+        yield (0, redis_1.cacheDoctorData)(cacheKey, response, 900);
+        res.json(response);
     }
     catch (error) {
         res.status(500).json({ message: "Internal Server Error" });
