@@ -44,7 +44,7 @@ router.get("/user/:email", (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        return res.json(user);
+        return res.status(200).json(user);
     }
     catch (error) {
         res.status(500).json({ message: "Internal Server Error" });
